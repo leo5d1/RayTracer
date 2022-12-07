@@ -1,7 +1,9 @@
 #include "Renderer.h"
+#include "../Objects/Object.h"
+#include "../Objects/Scene.h"
 #include <iostream>
 
-void Renderer::Render(Canvas& canvas, Object* object)
+void Renderer::Render(Canvas& canvas, Scene& scene)
 {
 	// camera / viewport
 	glm::vec3 lowerLeft{ -2, -1, -1 };
@@ -22,16 +24,9 @@ void Renderer::Render(Canvas& canvas, Object* object)
 			Ray ray{ eye, direction };
 
 			RaycastHit raycastHit;
-			color3 color;
-			if (object->Hit(ray, 0.01f, 100.0f, raycastHit))
-			{
-				color = { 1, 0, 0 };
-			}
-			else
-			{
-				// get gradient background color from ray
-				color = GetBackgroundFromRay(ray);
-			}
+
+			color3 color = scene.Trace(ray, 0.01f, 1000.0f, raycastHit, 5);
+			
 			canvas.DrawPoint({ x, y }, color4(color, 1)); 
 		}
 	}
@@ -46,12 +41,14 @@ bool Renderer::Initialize()
 	}
 	return true;
 }
+
 void Renderer::Shutdown()
 {
 	if (m_window) SDL_DestroyWindow(m_window);
 	if (m_renderer) SDL_DestroyRenderer(m_renderer);
 	SDL_Quit();
 }
+
 bool Renderer::CreateWindow(int width, int height)
 {
 	m_window = SDL_CreateWindow("Ray Tracer", 100, 100, width, height, SDL_WINDOW_SHOWN);
@@ -84,6 +81,6 @@ color3 Renderer::GetBackgroundFromRay(const Ray& ray)
 {
 	glm::vec3 direction = glm::normalize(ray.direction);
 	float t = 0.5f * (direction.y + 1.0f);
-	return interp(color3{ 1.0f }, color3{ 0.5f, 0.7f, 1.0f }, t);
+	return lerp(color3{ 1.0f }, color3{ 0.5f, 0.7f, 1.0f }, t);
 }
 
